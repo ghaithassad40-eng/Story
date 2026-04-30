@@ -6,6 +6,56 @@ const AGES = ['4-6 years', '7-9 years', '10-12 years']
 const GENRES = ['Adventure 🗺️', 'Fantasy 🧙', 'Space 🚀', 'Animals 🦁', 'Friendship 💛', 'Mystery 🔍']
 const LENGTHS = ['Short (1 min)', 'Medium (3 min)', 'Long (5 min)']
 
+async function generateStoryImage(idea, genre) {
+  const lumenKey = import.meta.env.VITE_LUMEN_API_KEY
+  if (!lumenKey) return null
+
+  const genreText = genre ? genre.replace(/[^\w\s]/g, '').trim() + ' style, ' : ''
+  const imagePrompt = `Colorful children's book illustration, ${genreText}${idea}. Cute friendly characters, vibrant colors, soft lighting, whimsical digital art for kids`
+
+  try {
+    const res = await fetch('https://app.lumenpro.io/mcp', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${lumenKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: Date.now(),
+        method: 'tools/call',
+        params: {
+          name: 'generate_image',
+          arguments: {
+            model_id: 19,
+            prompt: imagePrompt,
+            aspect_ratio: '1:1',
+          },
+        },
+      }),
+    })
+
+    if (!res.ok) return null
+    const data = await res.json()
+    const content = data?.result?.content
+    if (!content?.length) return null
+
+    const imgItem = content.find(c => c.type === 'image')
+    if (imgItem?.url) return imgItem.url
+    if (imgItem?.data) return `data:image/png;base64,${imgItem.data}`
+
+    const textItem = content.find(c => c.type === 'text')
+    if (textItem?.text) {
+      const match = textItem.text.match(/https?:\/\/\S+\.(?:png|jpg|jpeg|webp)(?:\?\S*)?/i)
+        || textItem.text.match(/https?:\/\/\S+/i)
+      if (match) return match[0]
+    }
+  } catch {
+    // image generation is best-effort; story still shows
+  }
+  return null
+}
+
 export default function Create() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -45,32 +95,35 @@ Rules:
 - Format with a title, then paragraphs (no markdown headers, just plain paragraphs)`
 
     try {
-      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': window.location.origin,
-          'X-Title': 'StoryMagic Kids',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.0-flash-001',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: wordCount * 2,
-          temperature: 0.85,
+      const [storyRes, imageUrl] = await Promise.all([
+        fetch('https://openrouter.ai/api/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'StoryMagic Kids',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.0-flash-001',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: wordCount * 2,
+            temperature: 0.85,
+          }),
         }),
-      })
+        generateStoryImage(idea, genre),
+      ])
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        throw new Error(data?.error?.message || `API error ${res.status}`)
+      if (!storyRes.ok) {
+        const data = await storyRes.json().catch(() => ({}))
+        throw new Error(data?.error?.message || `API error ${storyRes.status}`)
       }
 
-      const data = await res.json()
+      const data = await storyRes.json()
       const story = data.choices?.[0]?.message?.content || ''
 
       navigate('/story', {
-        state: { story, idea, age, genre, length },
+        state: { story, idea, age, genre, length, imageUrl },
       })
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')

@@ -36,6 +36,21 @@
   overflow: hidden;
 }
 
+.coverWrap {
+  margin: -2.5rem -2.5rem 1.75rem;
+  border-radius: 28px 28px 0 0;
+  overflow: hidden;
+  aspect-ratio: 1 / 1;
+  max-height: 380px;
+}
+
+.coverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .storyCard::before {
   content: '';
   position: absolute;
@@ -140,6 +155,42 @@
 .btnSecondary:hover {
   transform: translateY(-2px);
   background: #f5f3ff;
+}
+
+.btnListen {
+  padding: 0.8rem 1.8rem;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1rem;
+  border: none;
+  box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.btnListen:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(5, 150, 105, 0.4);
+}
+
+.btnListen:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnListenActive {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.3);
+}
+
+.ttsError {
+  text-align: center;
+  color: #dc2626;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0.75rem 0 0;
 }
 
 .ideaNote {
