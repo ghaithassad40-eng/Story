@@ -1,8 +1,9 @@
 import { useLocation, Link, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import styles from './Story.module.css'
+import config from '../config.json'
 
-const VOICE_ID = '21m00Tcm4TlvDq8ikWAM' // Rachel — clear, friendly
+const { voiceId: VOICE_ID, modelId: EL_MODEL, voiceSettings: VOICE_SETTINGS } = config.elevenlabs
 
 export default function Story() {
   const { state } = useLocation()
@@ -29,19 +30,36 @@ export default function Story() {
 
   const { story, idea, age, genre, length, imageUrl } = state
 
-  const paragraphs = story
-    .split('\n')
-    .map(p => p.trim())
-    .filter(Boolean)
-
+  const paragraphs = story.split('\n').map(p => p.trim()).filter(Boolean)
   const title = paragraphs[0]
   const body = paragraphs.slice(1)
 
   function handlePrint() { window.print() }
   function handleCopy() { navigator.clipboard.writeText(story) }
 
+  function handleSaveJSON() {
+    const payload = {
+      title,
+      idea,
+      age,
+      genre,
+      length,
+      imageUrl: imageUrl || null,
+      story,
+      createdAt: new Date().toISOString(),
+      generatedBy: config.app.name,
+      model: config.openrouter.model,
+    }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const handleListen = useCallback(async () => {
-    // Toggle pause/resume
     if (ttsState === 'playing' && audioRef.current) {
       audioRef.current.pause()
       setTtsState('paused')
@@ -53,7 +71,6 @@ export default function Story() {
       return
     }
 
-    // Stop existing
     if (audioRef.current) {
       audioRef.current.pause()
       URL.revokeObjectURL(audioRef.current.src)
@@ -71,7 +88,7 @@ export default function Story() {
 
     try {
       const res = await fetch(
-        `https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}/stream`,
+        `${config.elevenlabs.baseUrl}/${VOICE_ID}/stream`,
         {
           method: 'POST',
           headers: {
@@ -80,8 +97,8 @@ export default function Story() {
           },
           body: JSON.stringify({
             text: story,
-            model_id: 'eleven_turbo_v2',
-            voice_settings: { stability: 0.5, similarity_boost: 0.8 },
+            model_id: EL_MODEL,
+            voice_settings: VOICE_SETTINGS,
           }),
         }
       )
@@ -161,10 +178,11 @@ export default function Story() {
             {listenLabel}
           </button>
           {(ttsState === 'playing' || ttsState === 'paused') && (
-            <button onClick={handleStop} className={styles.btnSecondary}>
-              ⏹ Stop
-            </button>
+            <button onClick={handleStop} className={styles.btnSecondary}>⏹ Stop</button>
           )}
+          <button onClick={handleSaveJSON} className={styles.btnSecondary}>
+            📥 Save JSON
+          </button>
           <button onClick={handleCopy} className={styles.btnSecondary}>
             📋 Copy
           </button>

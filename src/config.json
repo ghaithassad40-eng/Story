@@ -1,0 +1,42 @@
+{
+  "app": {
+    "name": "StoryMagic Kids",
+    "tagline": "Create Your Own Magic Story!"
+  },
+  "openrouter": {
+    "baseUrl": "https://openrouter.ai/api/v1/chat/completions",
+    "model": "google/gemini-2.0-flash-001",
+    "temperature": 0.85
+  },
+  "lumen": {
+    "baseUrl": "https://app.lumenpro.io/mcp",
+    "modelId": 19,
+    "aspectRatio": "1:1"
+  },
+  "elevenlabs": {
+    "baseUrl": "https://api.elevenlabs.io/v1/text-to-speech",
+    "voiceId": "21m00Tcm4TlvDq8ikWAM",
+    "voiceName": "Rachel",
+    "modelId": "eleven_turbo_v2",
+    "voiceSettings": {
+      "stability": 0.5,
+      "similarity_boost": 0.8
+    }
+  },
+  "story": {
+    "ages": ["4-6 years", "7-9 years", "10-12 years"],
+    "genres": [
+      "Adventure 🗺️",
+      "Fantasy 🧙",
+      "Space 🚀",
+      "Animals 🦁",
+      "Friendship 💛",
+      "Mystery 🔍"
+    ],
+    "lengths": [
+      { "label": "Short (1 min)", "words": 150 },
+      { "label": "Medium (3 min)", "words": 350 },
+      { "label": "Long (5 min)", "words": 600 }
+    ]
+  }
+}

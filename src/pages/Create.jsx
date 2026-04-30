@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './Create.module.css'
+import config from '../config.json'
 
-const AGES = ['4-6 years', '7-9 years', '10-12 years']
-const GENRES = ['Adventure 🗺️', 'Fantasy 🧙', 'Space 🚀', 'Animals 🦁', 'Friendship 💛', 'Mystery 🔍']
-const LENGTHS = ['Short (1 min)', 'Medium (3 min)', 'Long (5 min)']
+const { ages: AGES, genres: GENRES, lengths: LENGTHS } = config.story
 
 async function generateStoryImage(idea, genre) {
   const lumenKey = import.meta.env.VITE_LUMEN_API_KEY
@@ -14,7 +13,7 @@ async function generateStoryImage(idea, genre) {
   const imagePrompt = `Colorful children's book illustration, ${genreText}${idea}. Cute friendly characters, vibrant colors, soft lighting, whimsical digital art for kids`
 
   try {
-    const res = await fetch('https://app.lumenpro.io/mcp', {
+    const res = await fetch(config.lumen.baseUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lumenKey}`,
@@ -27,9 +26,9 @@ async function generateStoryImage(idea, genre) {
         params: {
           name: 'generate_image',
           arguments: {
-            model_id: 19,
+            model_id: config.lumen.modelId,
             prompt: imagePrompt,
-            aspect_ratio: '1:1',
+            aspect_ratio: config.lumen.aspectRatio,
           },
         },
       }),
@@ -63,7 +62,7 @@ export default function Create() {
   const [idea, setIdea] = useState(prefill)
   const [age, setAge] = useState(AGES[1])
   const [genre, setGenre] = useState('')
-  const [length, setLength] = useState(LENGTHS[0])
+  const [length, setLength] = useState(LENGTHS[0].label)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -81,7 +80,7 @@ export default function Create() {
       return
     }
 
-    const wordCount = length === LENGTHS[0] ? 150 : length === LENGTHS[1] ? 350 : 600
+    const wordCount = LENGTHS.find(l => l.label === length)?.words ?? 150
     const prompt = `Write a fun, imaginative children's story for kids aged ${age}.
 Genre: ${genre || 'any fun genre'}
 Idea: ${idea}
@@ -96,19 +95,19 @@ Rules:
 
     try {
       const [storyRes, imageUrl] = await Promise.all([
-        fetch('https://openrouter.ai/api/v1/chat/completions', {
+        fetch(config.openrouter.baseUrl, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
             'HTTP-Referer': window.location.origin,
-            'X-Title': 'StoryMagic Kids',
+            'X-Title': config.app.name,
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.0-flash-001',
+            model: config.openrouter.model,
             messages: [{ role: 'user', content: prompt }],
             max_tokens: wordCount * 2,
-            temperature: 0.85,
+            temperature: config.openrouter.temperature,
           }),
         }),
         generateStoryImage(idea, genre),
@@ -178,12 +177,12 @@ Rules:
               <div className={styles.chips}>
                 {LENGTHS.map(l => (
                   <button
-                    key={l}
+                    key={l.label}
                     type="button"
-                    className={`${styles.chip} ${length === l ? styles.chipActive : ''}`}
-                    onClick={() => setLength(l)}
+                    className={`${styles.chip} ${length === l.label ? styles.chipActive : ''}`}
+                    onClick={() => setLength(l.label)}
                   >
-                    {l}
+                    {l.label}
                   </button>
                 ))}
               </div>
