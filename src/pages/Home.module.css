@@ -1,0 +1,180 @@
+.page {
+  flex: 1;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 4rem 2rem 3rem;
+  background: linear-gradient(160deg, #f5f3ff 0%, #fdf4ff 50%, #fce7f3 100%);
+}
+
+.bubbles {
+  font-size: 2.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  animation: float 3s ease-in-out infinite alternate;
+}
+
+@keyframes float {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-10px); }
+}
+
+.title {
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+  color: #1e1b4b;
+}
+
+.gradient {
+  background: linear-gradient(135deg, #7c3aed, #ec4899, #f97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #6b7280;
+  max-width: 560px;
+  margin: 0 auto 2rem;
+  line-height: 1.7;
+  font-weight: 600;
+}
+
+.ctas {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btnPrimary {
+  display: inline-block;
+  padding: 0.85rem 2rem;
+  border-radius: 50px;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.05rem;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btnPrimary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.45);
+}
+
+.btnSecondary {
+  display: inline-block;
+  padding: 0.85rem 2rem;
+  border-radius: 50px;
+  background: #fff;
+  color: #7c3aed;
+  font-weight: 800;
+  font-size: 1.05rem;
+  border: 2.5px solid #a78bfa;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.btnSecondary:hover {
+  transform: translateY(-2px);
+  background: #f5f3ff;
+}
+
+/* Features */
+.features {
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.sectionTitle {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #1e1b4b;
+  margin-bottom: 2.5rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 2rem 1.5rem;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.08);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(124, 58, 237, 0.15);
+}
+
+.cardIcon {
+  font-size: 2.8rem;
+  margin-bottom: 1rem;
+}
+
+.card h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #1e1b4b;
+  margin-bottom: 0.4rem;
+}
+
+.card p {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+/* Bottom CTA */
+.cta {
+  padding: 3rem 2rem 5rem;
+  text-align: center;
+}
+
+.ctaBox {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  border-radius: 24px;
+  padding: 3rem 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  color: #fff;
+}
+
+.ctaBox h2 {
+  font-size: 2rem;
+  font-weight: 900;
+  margin-bottom: 0.75rem;
+}
+
+.ctaBox p {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+.ctaBox .btnPrimary {
+  background: #fff;
+  color: #7c3aed;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.ctaBox .btnPrimary:hover {
+  background: #f5f3ff;
+}
