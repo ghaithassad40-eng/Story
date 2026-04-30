@@ -78,8 +78,8 @@ export default function Story() {
     }
 
     const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY
-    if (!apiKey) {
-      setTtsError('Add VITE_ELEVENLABS_API_KEY to your .env file.')
+    if (!apiKey || apiKey.startsWith('your_')) {
+      setTtsError('ElevenLabs key not configured. Add your key to enable narration.')
       return
     }
 
