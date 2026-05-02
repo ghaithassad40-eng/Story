@@ -1,7 +1,5 @@
 import { useLocation, Link, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import styles from './Story.module.css'
 import config from '../config.json'
 
@@ -176,6 +174,10 @@ export default function Story() {
   async function handleSavePDF() {
     showToast('📚 Generating PDF book…', 6000)
     try {
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ])
       const canvas = await html2canvas(printRef.current, {
         scale: 2,
         useCORS: true,
