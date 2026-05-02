@@ -5,6 +5,7 @@ const links = [
   { to: '/', label: '🏠 Home' },
   { to: '/create', label: '✨ Create Story' },
   { to: '/examples', label: '📚 Examples' },
+  { to: '/library', label: '🗂️ My Library' },
 ]
 
 export default function Navbar() {

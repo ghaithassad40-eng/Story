@@ -1,0 +1,23 @@
+.field {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  bottom: -20px;
+  font-size: 1rem;
+  animation: floatStar linear infinite;
+  opacity: 0;
+  user-select: none;
+}
+
+@keyframes floatStar {
+  0%   { transform: translateY(0) rotate(0deg) scale(0.6); opacity: 0; }
+  8%   { opacity: 0.9; }
+  90%  { opacity: 0.8; }
+  100% { transform: translateY(-110vh) rotate(720deg) scale(1.1); opacity: 0; }
+}

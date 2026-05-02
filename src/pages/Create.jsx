@@ -1,16 +1,22 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import styles from './Create.module.css'
 import config from '../config.json'
 
 const { ages: AGES, genres: GENRES, lengths: LENGTHS } = config.story
 
-async function generateStoryImage(idea, genre) {
+const LOADING_STAGES = [
+  { emoji: '🧚', msg: 'Waking up the story fairies…' },
+  { emoji: '✨', msg: 'Sprinkling magic dust…' },
+  { emoji: '📖', msg: 'Writing your adventure…' },
+  { emoji: '🎨', msg: 'Painting magical scenes…' },
+  { emoji: '🌈', msg: 'Adding a rainbow ending…' },
+  { emoji: '🌟', msg: 'Almost ready, hold tight!' },
+]
+
+async function generateImage(prompt, aspectRatio = config.lumen.aspectRatio) {
   const lumenKey = import.meta.env.VITE_LUMEN_API_KEY
   if (!lumenKey) return null
-
-  const genreText = genre ? genre.replace(/[^\w\s]/g, '').trim() + ' style, ' : ''
-  const imagePrompt = `Colorful children's book illustration, ${genreText}${idea}. Cute friendly characters, vibrant colors, soft lighting, whimsical digital art for kids`
 
   try {
     const res = await fetch(config.lumen.baseUrl, {
@@ -21,14 +27,14 @@ async function generateStoryImage(idea, genre) {
       },
       body: JSON.stringify({
         jsonrpc: '2.0',
-        id: Date.now(),
+        id: Date.now() + Math.random(),
         method: 'tools/call',
         params: {
           name: 'generate_image',
           arguments: {
             model_id: config.lumen.modelId,
-            prompt: imagePrompt,
-            aspect_ratio: config.lumen.aspectRatio,
+            prompt,
+            aspect_ratio: aspectRatio,
           },
         },
       }),
@@ -50,9 +56,27 @@ async function generateStoryImage(idea, genre) {
       if (match) return match[0]
     }
   } catch {
-    // image generation is best-effort; story still shows
+    // image generation is best-effort
   }
   return null
+}
+
+function extractSceneSummaries(storyText) {
+  const paras = storyText.split('\n').map(p => p.trim()).filter(Boolean)
+  const body = paras.slice(1) // skip title
+  if (!body.length) return []
+
+  // Pick 2 evenly spaced paragraphs for scene illustrations
+  const scenes = []
+  if (body.length >= 2) {
+    const mid = Math.floor(body.length / 2)
+    scenes.push(body[Math.min(1, body.length - 1)])    // early scene
+    scenes.push(body[Math.min(mid + 1, body.length - 1)]) // mid scene
+  } else if (body.length === 1) {
+    scenes.push(body[0])
+  }
+  // Truncate each scene to first 120 chars for the prompt
+  return scenes.map(s => s.slice(0, 120))
 }
 
 export default function Create() {
@@ -64,7 +88,22 @@ export default function Create() {
   const [genre, setGenre] = useState('')
   const [length, setLength] = useState(LENGTHS[0].label)
   const [loading, setLoading] = useState(false)
+  const [stageIdx, setStageIdx] = useState(0)
   const [error, setError] = useState('')
+  const intervalRef = useRef(null)
+
+  // Cycle loading messages while generating
+  useEffect(() => {
+    if (loading) {
+      setStageIdx(0)
+      intervalRef.current = setInterval(() => {
+        setStageIdx(prev => (prev + 1) % LOADING_STAGES.length)
+      }, 1900)
+    } else {
+      clearInterval(intervalRef.current)
+    }
+    return () => clearInterval(intervalRef.current)
+  }, [loading])
 
   async function handleCreate(e) {
     e.preventDefault()
@@ -91,10 +130,14 @@ Rules:
 - Add fun sound effects and expressions
 - Give characters fun names
 - End with a positive, happy message
-- Format with a title, then paragraphs (no markdown headers, just plain paragraphs)`
+- Format with a title on the first line, then paragraphs (no markdown headers, just plain paragraphs)`
+
+    const genreText = genre ? genre.replace(/[^\w\s]/g, '').trim() + ' style, ' : ''
+    const coverPrompt = `Colorful children's book cover illustration, ${genreText}${idea}. Cute friendly characters, vibrant colors, soft lighting, whimsical digital art for kids`
 
     try {
-      const [storyRes, imageUrl] = await Promise.all([
+      // Generate story + cover image in parallel
+      const [storyRes, coverUrl] = await Promise.all([
         fetch(config.openrouter.baseUrl, {
           method: 'POST',
           headers: {
@@ -110,7 +153,7 @@ Rules:
             temperature: config.openrouter.temperature,
           }),
         }),
-        generateStoryImage(idea, genre),
+        generateImage(coverPrompt, '16:9'),
       ])
 
       if (!storyRes.ok) {
@@ -121,8 +164,17 @@ Rules:
       const data = await storyRes.json()
       const story = data.choices?.[0]?.message?.content || ''
 
+      // Generate 2 scene illustrations based on story content
+      const scenes = extractSceneSummaries(story)
+      const sceneImages = await Promise.all(
+        scenes.map(scene => {
+          const scenePrompt = `Colorful children's book watercolor illustration, ${genreText}${scene}. Soft pastel colors, friendly cute characters, magical atmosphere, no text`
+          return generateImage(scenePrompt, '4:3')
+        })
+      )
+
       navigate('/story', {
-        state: { story, idea, age, genre, length, imageUrl },
+        state: { story, idea, age, genre, length, imageUrl: coverUrl, sceneImages },
       })
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
@@ -131,8 +183,35 @@ Rules:
     }
   }
 
+  const stage = LOADING_STAGES[stageIdx]
+
   return (
     <main className={styles.page}>
+      {/* Fun Loading Overlay */}
+      {loading && (
+        <div className={styles.loadingOverlay}>
+          <div className={styles.loadingCard}>
+            <div className={styles.loadingEmojis}>
+              <span style={{ animationDelay: '0s' }}>✨</span>
+              <span style={{ animationDelay: '0.25s' }}>📚</span>
+              <span style={{ animationDelay: '0.5s' }}>🌟</span>
+            </div>
+            <div className={styles.loadingBigEmoji}>{stage.emoji}</div>
+            <h2 className={styles.loadingTitle}>Creating Your Story</h2>
+            <p className={styles.loadingMsg}>{stage.msg}</p>
+            <div className={styles.progressDots}>
+              {LOADING_STAGES.map((_, i) => (
+                <span
+                  key={i}
+                  className={`${styles.dot} ${i === stageIdx ? styles.dotActive : i < stageIdx ? styles.dotDone : ''}`}
+                />
+              ))}
+            </div>
+            <p className={styles.loadingHint}>This may take 10–20 seconds ☕</p>
+          </div>
+        </div>
+      )}
+
       <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.emoji}>✨</div>
@@ -212,11 +291,7 @@ Rules:
           )}
 
           <button type="submit" className={styles.submit} disabled={loading || !idea.trim()}>
-            {loading ? (
-              <span className={styles.loadingInner}>
-                <span className={styles.spinner} /> Writing your story...
-              </span>
-            ) : '🚀 Create My Story!'}
+            🚀 Create My Story!
           </button>
         </form>
       </div>
